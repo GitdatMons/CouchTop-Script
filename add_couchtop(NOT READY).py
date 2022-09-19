@@ -6,13 +6,13 @@ import sys
 
 from connect import *  # Interact w/ RS
 from pydicom import dcmread  # Read DICOM from file
-from scripy.signal import find_peaks  #Find 'peak' values in an array
+from scipy.signal import find_peaks  #Find 'peak' values in an array
 
 clr.AddReference('System.Windows.Forms')
 from System.Windows.Forms import MessageBox   #For display errors
 
 
-INNER_COUCH_NAME = 'Elakta Couch Foam Core'
+INNER_COUCH_NAME = 'Elekta Couch Foam Core'
 OUTER_COUCH_NAME = 'Elekta Carbon Fiber Shell'
 ADD_COUCH_TOP_EXPORT_PATH = os.path.join('T:', os.sep, 'Physics', 'Temp', 'Add Couch')
 
@@ -28,7 +28,7 @@ def add_couchtop_to_couch() -> None:
     Couch top is 51.4 cm wide, 196 cm long, and 2.8 cm tall 
     with a water equivalence of 2.0 mm at 6 MV.
 
-    Most coding copied from scripts by Kalew White
+    Most coding copied from scripts by Kaley White
     '''
 
     # Ensure a case is open
@@ -91,7 +91,7 @@ def add_couchtop_to_couch() -> None:
         inner_couch = struct_set.RoiGeometries[INNER_COUCH_NAME]
         outer_couch = struct_set.RoiGeometries[OUTER_COUCH_NAME]
     except:
-        MessageBox.Show('One or both of ' + INNER_COUCH_NAME + ' and ' + OUTER_COUCH_NAME + ' ROIs do not exist in the current case. Clcik OK to abort the script.', 'Missing Couch ROI(s)')
+        MessageBox.Show('One or both of ' + INNER_COUCH_NAME + ' and ' + OUTER_COUCH_NAME + ' ROIs do not exist in the current case. Click OK to abort the script.', 'Missing Couch ROI(s)')
         sys.exit()
 
     # Couch template and structure names
@@ -111,18 +111,18 @@ def add_couchtop_to_couch() -> None:
 
     ## Export exam so we can use pydicom to extract pixel data
     # Create export folder
-    if os.path.isdir(ADD_COUCH_EXPORT_PATH):
-        shutil.rmtree(ADD_COUCH_EXPORT_PATH)
-    os.makedirs(ADD_COUCH_EXPORT_PATH)
+    if os.path.isdir(ADD_COUCH_TOP_EXPORT_PATH):
+        shutil.rmtree(ADD_COUCH_TOP_EXPORT_PATH)
+    os.makedirs(ADD_COUCH_TOP_EXPORT_PATH)
 
     # Export exam
     # No RS functionality to export a single CT slice
     # Save Patient
     patient.Save()  # Error if you don't save before export
     try:
-        case.ScriptableDicomExport(ExportFolderPath=ADD_COUCH_EXPORT_PATH, Examinations=[exam.Name], IgnorePreConditionWarnings=False)
+        case.ScriptableDicomExport(ExportFolderPath=ADD_COUCH_TOP_EXPORT_PATH, Examinations=[exam.Name], IgnorePreConditionWarnings=False)
     except:
-        case.ScriptableDicomExport(ExportFolderPath=ADD_COUCH_EXPORT_PATH, Examinations=[exam.Name], IgnorePreConditionWarnings=True)
+        case.ScriptableDicomExport(ExportFolderPath=ADD_COUCH_TOP_EXPORT_PATH, Examinations=[exam.Name], IgnorePreConditionWarnings=True)
 
 
   
@@ -130,8 +130,8 @@ def add_couchtop_to_couch() -> None:
     # If entire sim couch is in scan, the couch top is the fourth 'bright' peak in the R-L middle
 
     # Get pixel intensities array
-    first_filename = os.listdir(ADD_COUCH_EXPORT_PATH)[0]  # Doesn't matter which CT DICOM file we use, so just use the first one
-    dcm = dcmread(os.path.join(ADD_COUCH_EXPORT_PATH, first_filename))
+    first_filename = os.listdir(ADD_COUCH_TOP_EXPORT_PATH)[0]  # Doesn't matter which CT DICOM file we use, so just use the first one
+    dcm = dcmread(os.path.join(ADD_COUCH_TOP_EXPORT_PATH, first_filename))
     intensities = dcm.pixel_array
 
     # Select intensities in R-L center
@@ -210,7 +210,7 @@ def add_couchtop_to_couch() -> None:
         bs.ComputeDose(ComputeBeamDoses=True, DoseAlgorithm=bs.AccurateDoseAlgorithm.DoseAlgorithm)
 
     # Remove unnecessary exported files
-    shutil.rmtree(ADD_COUCH_EXPORT_PATH)
+    shutil.rmtree(ADD_COUCH_TOP_EXPORT_PATH)
 
     # Display warnings if they exist
     if warnings:
